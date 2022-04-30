@@ -3,7 +3,21 @@ const app = express();
 
 app.use(express.json());
 
-const persons = [
+const requestLogger = (request, response, next) => {
+  console.log(request.method);
+  console.log(request.path);
+  console.log(request.body);
+  console.log("-----");
+  next();
+};
+
+app.use(requestLogger);
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+let persons = [
   {
     id: 1,
     name: "Arto Hellas",
@@ -39,7 +53,47 @@ app.get("/api/persons", (request, response) => {
   response.json(persons);
 });
 
+app.get("/api/persons/:id", (request, response) => {
+  const id = Number(request.params.id);
+  const person = persons.find((p) => p.id === id);
 
+  if (person) {
+    response.json(person);
+  } else {
+    response.status(404).end();
+  }
+});
+
+app.delete("/api/persons/:id", (request, response) => {
+  const id = Number(request.params.id);
+  persons = persons.filter((p) => p.id !== id);
+
+  response.status(204).end();
+});
+
+app.post("/api/persons", (request, response) => {
+  const body = request.body;
+  if (!body.name || !body.number) {
+    return response.status(400).json({
+      error: "The name or number is missing",
+    });
+  }
+  if (persons.find((p) => p.name === body.name)) {
+    return response.status(400).json({
+      error: "The name already exists",
+    });
+  }
+  const person = {
+    name: body.name,
+    number: body.number,
+    id: getRandomInt(100),
+  };
+
+  persons = persons.concat(person);
+  console.log(persons);
+
+  response.json(person);
+});
 
 const PORT = 3001;
 app.listen(PORT, () => {
