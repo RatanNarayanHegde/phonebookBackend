@@ -1,17 +1,15 @@
 const express = require("express");
+const morgan = require("morgan");
 const app = express();
 
+morgan.token("body", (req) => {
+  if (req.method === "POST") {
+    return JSON.stringify(req.body);
+  }
+});
+
 app.use(express.json());
-
-const requestLogger = (request, response, next) => {
-  console.log(request.method);
-  console.log(request.path);
-  console.log(request.body);
-  console.log("-----");
-  next();
-};
-
-app.use(requestLogger);
+app.use(morgan(":method :url :body"));
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
@@ -90,7 +88,7 @@ app.post("/api/persons", (request, response) => {
   };
 
   persons = persons.concat(person);
-  console.log(persons);
+  // console.log(persons);
 
   response.json(person);
 });
