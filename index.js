@@ -13,6 +13,7 @@ morgan.token("body", (req) => {
 app.use(cors());
 app.use(express.json());
 app.use(morgan(":method :url :body"));
+app.use(express.static("build"));
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
