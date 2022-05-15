@@ -22,15 +22,14 @@ function getRandomInt(max) {
 }
 
 app.get("/info", (request, response) => {
-  let totalPersons;
   Person.find({}).then((persons) => {
-    totalPersons = persons.length;
-  });
-  response.send(`The phonebook has ${totalPersons} people \n
+    const totalPersons = persons.length;
+    response.send(`The phonebook has ${totalPersons} people \n
    ${new Date()}`);
-  console.log(
-    `<p>The phonebook has ${totalPersons} people</p><p>${new Date()}</p>`
-  );
+    console.log(
+      `<p>The phonebook has ${totalPersons} people</p><p>${new Date()}</p>`
+    );
+  });
 });
 
 app.get("/api/persons", (request, response) => {
@@ -46,11 +45,25 @@ app.get("/api/persons/:id", (request, response) => {
   });
 });
 
-app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  persons = persons.filter((p) => p.id !== id);
+app.delete("/api/persons/:id", (request, response, next) => {
+  Person.findByIdAndRemove(request.params.id)
+    .then((result) => {
+      response.status(204).end();
+    })
+    .catch((error) => next(error));
+});
 
-  response.status(204).end();
+app.put("/api/persons/:id", (request, response, next) => {
+  const person = {
+    name: request.body.name,
+    number: request.body.number,
+  };
+
+  Person.findByIdAndUpdate(request.body.id, person, { new: true })
+    .then((returnedPerson) => {
+      response.json(returnedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 app.post("/api/persons", (request, response) => {
@@ -70,6 +83,18 @@ app.post("/api/persons", (request, response) => {
     response.json(savedPerson);
   });
 });
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  }
+
+  next(error);
+};
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
